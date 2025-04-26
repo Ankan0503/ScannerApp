@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:scanner_app/main.dart';
+import 'package:scanner_app/snack_bar.dart';
 import 'package:file_picker/file_picker.dart';
-// import 'package:scanner_app/cam_permission.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddFile extends StatefulWidget {
   const AddFile({super.key});
@@ -9,7 +12,21 @@ class AddFile extends StatefulWidget {
 }
 
 class AddFileState extends State<AddFile> {
-  String? _fileName;
+  List<String> fileName = [];
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _openCamera() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      setState(() {
+        String customImageName =
+            'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        fileName.add(customImageName);
+      });
+    }
+  }
+
   Future<void> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -25,16 +42,16 @@ class AddFileState extends State<AddFile> {
         if (!allowed.contains(extension)) {
           // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Only images and PDFs are allowed!'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColor().pastelRed,
             ),
           );
           return;
         }
 
         setState(() {
-          _fileName = file.name;
+          fileName.add(file.name);
         });
       }
     } catch (e) {
@@ -42,130 +59,158 @@ class AddFileState extends State<AddFile> {
     }
   }
 
+  void resetFile() {
+    setState(() {
+      fileName.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 340,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 10),
-          const Text(
-            "Upload a JPG or PDF file",
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Upload a JPG or PDF file",
+          style: GoogleFonts.poppins(
+            fontSize: 21,
+            fontWeight: FontWeight.w600,
+            color: AppColor().darkText,
           ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              TextButton(
-                onPressed: _pickFile,
-                style: ButtonStyle(
-                  shape: WidgetStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  backgroundColor: WidgetStateProperty.all(
-                    const Color.fromARGB(215, 94, 156, 207),
+        ),
+        SizedBox(height: 4),
+        Row(
+          children: [
+            TextButton(
+              onPressed: _pickFile,
+              style: ButtonStyle(
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
                 ),
-                child: const Text(
-                  'Select File',
-                  style: TextStyle(fontSize: 20, color: Colors.white),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                ),
+                backgroundColor: WidgetStateProperty.all(
+                  AppColor().pastelOrange,
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.camera_alt_rounded),
-                iconSize: 32,
+              child: Text(
+                'Select File',
+                style: GoogleFonts.poppins(color: AppColor().darkText),
               ),
-            ],
-          ),
-          SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Text(
-              _fileName != null
-                  ? 'Selected File: $_fileName'
-                  : 'No file selected',
-              style: TextStyle(fontSize: 15),
             ),
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {},
-            style: ButtonStyle(
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
+            SizedBox(width: 15),
+            IconButton(
+              onPressed: () {
+                _openCamera();
+              },
+              icon: Container(
+                height: 48,
+                width: 48,
+                decoration: BoxDecoration(
+                  color: AppColor().pastelPink,
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(Icons.camera_alt_rounded),
               ),
-              fixedSize: WidgetStateProperty.all(Size(170, 40)),
-              backgroundColor: WidgetStateProperty.all(
-                const Color.fromARGB(188, 40, 91, 203),
-              ),
+              color: AppColor().darkText,
             ),
-            child: Wrap(
+          ],
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text.rich(
+            TextSpan(
               children: [
-                Text(
-                  "Upload ",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                TextSpan(
+                  text: 'Selected Files:\n',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    color: AppColor().darkText,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
-                Icon(Icons.upload, size: 27, color: Colors.white),
+                TextSpan(
+                  text: fileName.join(',\n'),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: AppColor().darkText,
+                  ),
+                ),
               ],
             ),
           ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {},
-            style: ButtonStyle(
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              fixedSize: WidgetStateProperty.all(Size(170, 40)),
-              backgroundColor: WidgetStateProperty.all(Colors.red),
-            ),
-            child: Wrap(
-              children: [
-                Text(
-                  "Reset ",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
+
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () {},
+              style: ButtonStyle(
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
                 ),
-                Icon(Icons.restore_from_trash, size: 27, color: Colors.white),
-              ],
-            ),
-          ),
-          SizedBox(height: 25),
-          const Text(
-            "Download your CSV file here",
-            style: TextStyle(fontSize: 14, color: Colors.blue),
-          ),
-          SizedBox(height: 5),
-          ElevatedButton(
-            onPressed: () {},
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all(
-                Color.fromARGB(188, 40, 91, 203),
-              ),
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              fixedSize: WidgetStateProperty.all(Size(170, 40)),
-            ),
-            child: Wrap(
-              children: [
-                Text(
-                  "Download ",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 ),
-                Icon(Icons.download, size: 27, color: Colors.white),
-              ],
+                backgroundColor: WidgetStateProperty.all(
+                  AppColor().pastelPurple,
+                ),
+              ),
+              child: Wrap(
+                children: [
+                  Text(
+                    "Upload ",
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  Icon(Icons.upload, size: 24, color: Colors.white),
+                ],
+              ),
             ),
+            SizedBox(width: 15),
+            ElevatedButton(
+              onPressed: () {
+                resetFile();
+              },
+              style: ButtonStyle(
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                ),
+                backgroundColor: WidgetStateProperty.all(AppColor().pastelRed),
+              ),
+              child: Wrap(
+                children: [
+                  Text(
+                    "Reset ",
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  Icon(Icons.delete, size: 22, color: Colors.white),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+        Text(
+          "Download your CSV file here",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColor().darkText,
           ),
-          SizedBox(height: 20),
-        ],
-      ),
+        ),
+        SizedBox(height: 15),
+        Center(child: CustomSnackBar()),
+      ],
     );
   }
 }
